@@ -43,7 +43,7 @@ A linha "Placa gráfica NVIDIA" na janela diz se a placa vai ser usada. Se disse
 
 - **Qualidade:** "Rápida" chega para quase todos os livros. Usa "Máxima" se a
   sincronização ficar fraca.
-- **Língua:** por omissão, usa a língua indicada no EPUB.
+- **Língua:** "Automática" usa a língua indicada no ebook ou, se ele não a indicar, deteta-a no áudio. Escolhe outra só se o ebook indicar a língua errada.
 
 ### Se a sincronização ficar fraca
 
