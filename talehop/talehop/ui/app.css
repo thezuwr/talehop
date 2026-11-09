@@ -140,6 +140,9 @@ select.input option { background: var(--card); color: var(--ink); }
 .hint b { color: var(--ink); font-weight: 600; }
 
 .log { flex: 1; min-height: 120px; padding: 18px 22px; gap: 10px; }
+.legal { text-align: center; font-size: 12px; padding: 0 8px; }
+.legal a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.legal a:hover { text-decoration: underline; }
 .link { border: none; background: none; color: var(--accent); font-size: 13px; font-weight: 600; padding: 0; }
 .lines { font: 12px/1.7 "Cascadia Mono", Consolas, Menlo, monospace; color: var(--ink2); white-space: pre-wrap; word-break: break-word;
   overflow-y: auto; flex: 1; min-height: 0; user-select: text; }
