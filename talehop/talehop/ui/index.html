@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>Talehop</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <!-- livro aberto de onde sobe a voz, com uma faísca dourada (versão pequena do ícone) -->
+    <div class="logo" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 64 64"><path d="M31 40.5c-6-3.5-13-4.8-22-4v19c9-.8 16 .5 22 4z" fill="currentColor"/><path d="M33 40.5c6-3.5 13-4.8 22-4v19c-9-.8-16 .5-22 4z" fill="currentColor"/><path d="M32 34c-7-3.2 7-6.4 0-10.2s7-6.4 0-10.2" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M46 5l1.8 3.9 3.9 1.8-3.9 1.8L46 16.4l-1.8-3.9-3.9-1.8 3.9-1.8z" fill="#F2C46B"/></svg>
+    </div>
+    <div class="word">talehop</div>
+    <div class="tag" data-i18n="tag"></div>
+    <div class="grow"></div>
+    <span class="pill" id="device">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2.5v3.5M15 2.5v3.5M9 18v3.5M15 18v3.5M2.5 9h3.5M2.5 15h3.5M18 9h3.5M18 15h3.5"/></svg>
+      <span id="device-name" data-i18n="checking_gpu"></span>
+      <span class="dot hidden" id="device-dot"></span>
+      <span id="device-speed"></span>
+    </span>
+    <button class="pack hidden" id="gpu-pack"></button>
+    <div class="seg langs" id="ui-lang" role="group" data-i18n-aria="ui_lang">
+      <button data-l="pt">PT</button>
+      <button data-l="en">EN</button>
+    </div>
+    <button class="round" id="theme" title="Tema · Theme">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+    </button>
+  </header>
+
+  <div class="main">
+    <div class="col left">
+
+      <section class="card drop-zone">
+        <div class="head">
+          <span class="num" id="n1">1</span><span class="h" data-i18n="ebook"></span><div class="grow"></div>
+          <button class="btn" id="pick-epub"></button>
+        </div>
+        <div class="book">
+          <img class="cover hidden" id="cover" alt="">
+          <div class="cover-empty" id="cover-empty">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+            <div class="title ellipsis" id="book-title"></div>
+            <div class="muted ellipsis" id="book-author"></div>
+            <div class="chips hidden" id="book-chips" style="margin-top:6px"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card drop-zone">
+        <div class="head">
+          <span class="num" id="n2">2</span><span class="h" data-i18n="audiobook"></span><div class="grow"></div>
+          <button class="btn" id="pick-files" data-i18n="files_btn"></button>
+          <button class="btn" id="pick-dir" data-i18n="folder_btn"></button>
+        </div>
+        <div class="files" id="files"></div>
+        <div class="small muted" id="audio-note"></div>
+      </section>
+
+      <section class="card">
+        <div class="head"><span class="num" id="n3">3</span><span class="h" data-i18n="options"></span></div>
+        <div class="grid2">
+          <div class="field">
+            <span class="label" data-i18n="quality"></span>
+            <div class="seg" id="quality">
+              <button data-q="rapida" class="on" data-i18n="fast"></button>
+              <button data-q="maxima" data-i18n="best"></button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="language" data-i18n="book_lang"></label>
+            <select class="input" id="language">
+              <option value=""></option>
+              <option value="pt"></option>
+              <option value="en"></option>
+              <option value="es"></option>
+              <option value="fr"></option>
+              <option value="it"></option>
+              <option value="de"></option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label" for="out" data-i18n="save_to"></label>
+          <div class="row">
+            <input class="input" id="out" data-i18n-ph="out_placeholder" spellcheck="false">
+            <button class="sq" id="pick-out" data-i18n-aria="pick_out">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7.5C3 6.7 3.7 6 4.5 6H9l2 2h8.5c.8 0 1.5.7 1.5 1.5v8c0 .8-.7 1.5-1.5 1.5h-15C3.7 19 3 18.3 3 17.5z"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <button class="go" id="go"></button>
+    </div>
+
+    <div class="col right">
+
+      <!-- antes de começar e depois de cancelar -->
+      <section class="card status" id="st-idle">
+        <div class="status-head">
+          <span class="badge">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4.5" height="6.5" rx="1.6"/><rect x="16.5" y="14" width="4.5" height="6.5" rx="1.6"/></svg>
+          </span>
+          <div>
+            <div class="big-title" id="idle-title"></div>
+            <div class="muted" id="idle-sub"></div>
+          </div>
+        </div>
+        <div class="steps" id="idle-steps"></div>
+      </section>
+
+      <!-- a trabalhar -->
+      <section class="card status hidden" id="st-run">
+        <div class="progress">
+          <div class="ring" id="ring"><div><b id="ring-pct">0%</b><span class="muted small" id="ring-label"></span></div></div>
+          <div style="display:flex;flex-direction:column;gap:14px;min-width:0;flex:1">
+            <div>
+              <div class="eta" id="eta"></div>
+              <div class="muted small" id="eta-sub"></div>
+            </div>
+            <div class="steps" id="run-steps"></div>
+            <div><button class="btn" id="cancel" style="height:44px;padding:0 20px"></button></div>
+          </div>
+        </div>
+        <div class="small muted" data-i18n="run_note"></div>
+      </section>
+
+      <!-- pronto -->
+      <section class="card status hidden" id="st-done">
+        <div class="status-head">
+          <span class="badge"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <div style="min-width:0">
+            <div class="big-title" data-i18n="done"></div>
+            <div class="muted ellipsis" id="done-file"></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:baseline;gap:10px"><span class="big" id="done-pct"></span><span class="muted" data-i18n="synced"></span></div>
+          <div class="bar"><div id="done-bar"></div></div>
+        </div>
+        <div class="warn hidden" id="done-warn" data-i18n="low_warn"></div>
+        <div class="stats">
+          <div class="stat"><b id="done-pages"></b><span class="muted small" id="done-pages-l"></span></div>
+          <div class="stat"><b id="done-chapters"></b><span class="muted small" data-i18n="chapters"></span></div>
+          <div class="stat"><b id="done-duration"></b><span class="muted small" data-i18n="of_audio"></span></div>
+        </div>
+        <button class="go" id="open-folder" style="height:52px;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7.5C3 6.7 3.7 6 4.5 6H9l2 2h8.5c.8 0 1.5.7 1.5 1.5v8c0 .8-.7 1.5-1.5 1.5h-15C3.7 19 3 18.3 3 17.5z"/></svg>
+          <span data-i18n="open_folder"></span>
+        </button>
+      </section>
+
+      <!-- erro -->
+      <section class="card status hidden" id="st-error">
+        <div class="status-head">
+          <span class="badge danger"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></span>
+          <div style="min-width:0">
+            <div class="big-title" data-i18n="error"></div>
+            <div class="muted" id="error-msg" style="user-select:text"></div>
+          </div>
+        </div>
+        <div class="small muted" data-i18n="error_note"></div>
+      </section>
+
+      <section class="card hint hidden" id="hint">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg></span>
+        <div class="small muted" style="font-size:14px" data-i18n-html="hint"></div>
+      </section>
+
+      <section class="card log">
+        <div class="head"><span style="font-weight:700" data-i18n="log"></span><div class="grow"></div><button class="link" id="log-toggle"></button></div>
+        <div class="lines" id="log"></div>
+      </section>
+    </div>
+  </div>
+</div>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+# App de Mac do Talehop, feita num Mac do GitHub (o PyInstaller não faz apps de Mac a partir do Windows).
+# Corre à mão: Actions → "App de Mac" → Run workflow.
+# O resultado (Talehop-mac.dmg) fica em "Artifacts", na página da execução.
+name: App de Mac
+
+on:
+  workflow_dispatch:
+
+jobs:
+  mac:
+    runs-on: macos-14  # Apple Silicon (M1 ou mais recente)
+    defaults:
+      run:
+        working-directory: talehop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Bibliotecas
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller==6.22.3 pillow
+
+      - name: Teste rápido (o motor de transcrição funciona neste Mac?)
+        run: |
+          say -o /tmp/ola.aiff "Talehop listens to the audiobook and follows the book."
+          python - <<'EOF'
+          from faster_whisper import WhisperModel
+          import sys
+          sys.path.insert(0, ".")
+          import talehop.gui_web as g
+          print("qualidade:", g.QUALITY, "definições:", g.SETTINGS)
+          model = WhisperModel("tiny", device="cpu", compute_type="int8")
+          segs, _ = model.transcribe("/tmp/ola.aiff", language="en", word_timestamps=True)
+          text = " ".join(s.text for s in segs)
+          print("ouvido:", text)
+          assert "audiobook" in text.lower().replace(" ", "") or "audio" in text.lower(), text
+          EOF
+
+      - name: Ícone
+        run: python build/make_icns.py
+
+      - name: Talehop.app
+        run: pyinstaller --noconfirm --distpath dist --workpath work build/talehop-mac.spec
+
+      - name: Assinatura local (sem conta Apple)
+        run: codesign --force --deep --sign - dist/Talehop.app
+
+      - name: A app arranca? (diagnóstico sem abrir a janela)
+        run: |
+          TALEHOP_GPU_CHECK=/tmp/check.json dist/Talehop.app/Contents/MacOS/Talehop --gpu-check
+          cat /tmp/check.json
+
+      - name: Talehop-mac.dmg
+        run: |
+          VERSION=$(python -c "import talehop; print(talehop.__version__)")
+          mkdir -p dmg && cp -R dist/Talehop.app dmg/ && ln -s /Applications dmg/Applications
+          hdiutil create -volname "Talehop" -srcfolder dmg -ov -format UDZO "dist/Talehop-$VERSION-mac.dmg"
+          ls -lh dist/*.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Talehop-mac
+          path: talehop/dist/*.dmg
+          retention-days: 30

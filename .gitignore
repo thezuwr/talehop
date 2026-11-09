@@ -1,0 +1,46 @@
+# ambientes e caches
+tmp/
+.venv/
+__pycache__/
+*.pyc
+.gradle/
+.idea/
+local.properties
+
+# compilações (refazem-se)
+talehop/dist/
+talehop/work/
+talehop/build/*
+!talehop/build/talehop.spec
+!talehop/build/talehop-mac.spec
+!talehop/build/installer.iss
+!talehop/build/run_talehop.py
+!talehop/build/make_icns.py
+app-android/app/build/
+app-android/app/.cxx/
+app-android/build/
+site-cloudflare/
+
+# instaladores e ficheiros grandes (vão para a Drive, não para o repositório)
+*.apk
+*.exe
+*.dmg
+*.zip
+Instaladores/
+site/downloads/
+
+# livros de teste e resultados (direitos de autor; não saem do PC)
+Book test/
+*.epub
+*.tale
+*.m4b
+*.mp3
+*.transcricao.json
+
+# fora deste repositório: só a app do PC é pública (capturas e imagens têm capas de livros)
+app-android/
+site/
+capturas-pc/
+imagens-reddit/
+talehop/teste/
+.claude/

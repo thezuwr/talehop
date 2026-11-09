@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leitor de teste</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root { --bg:#faf8f4; --fg:#222; --muted:#999; --hl:#ffe9a8; --bar:#fff; --line:#e4e0d8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#161616; --fg:#ddd; --muted:#666; --hl:#5a4a12; --bar:#202020; --line:#333; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 Georgia, serif; }
+  header { position:sticky; top:0; background:var(--bar); border-bottom:1px solid var(--line);
+           padding:10px 16px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+           font:14px system-ui, sans-serif; z-index:1; }
+  header select { max-width:260px; }
+  #info { color:var(--muted); }
+  main { max-width:680px; margin:0 auto; padding:24px 16px 50vh; }
+  p { margin:0 0 .9em; }
+  h3 { margin:1.6em 0 .6em; font-size:1.1em; }
+  .s { cursor:pointer; border-radius:3px; transition:background .15s; }
+  .s.none { color:var(--muted); cursor:default; }
+  .s.on { background:var(--hl); }
+  #drop { padding:40px 16px; text-align:center; font:16px system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<header>
+  <input type="file" id="file" accept=".tale,.sincro,.zip">
+  <button id="play" disabled>▶︎</button>
+  <span id="time">0:00</span>
+  <select id="chap" disabled></select>
+  <label><input type="checkbox" id="follow" checked> seguir</label>
+  <span id="info"></span>
+</header>
+<main id="text"><div id="drop">Escolhe um ficheiro <b>.tale</b> para começar.</div></main>
+<audio id="audio" preload="auto"></audio>
+<script>
+const $ = id => document.getElementById(id);
+const audio = $("audio");
+let book, urls = [], cur = 0, spans = [], timeline = [], active = -1;
+
+$("file").onchange = e => open(e.target.files[0]);
+const q = new URLSearchParams(location.search).get("f");  // ?f=livro.tale
+if (q) fetch(q).then(r => r.blob()).then(open);
+
+async function open(data) {
+  const zip = await JSZip.loadAsync(data);
+  book = JSON.parse(await zip.file("livro.json").async("string"));
+  urls = await Promise.all(book.audio.map(async a =>
+    URL.createObjectURL(await zip.file(a.file).async("blob"))));
+  render();
+  load(0, 0);
+}
+
+function render() {
+  const main = $("text"); main.innerHTML = "";
+  spans = []; timeline = [];
+  let timed = 0, total = 0;
+  book.paras.forEach((p, pi) => {
+    const el = document.createElement(p.k === "h" ? "h3" : "p");
+    el.id = "p" + pi;
+    p.s.forEach(s => {
+      const sp = document.createElement("span");
+      sp.className = "s"; sp.textContent = s[0];
+      total++;
+      if (s.length > 1) {
+        timed++;
+        const i = spans.length;
+        sp.dataset.i = i;
+        spans.push(sp);
+        timeline.push({ f: s[1], a: s[2], b: s[3] });
+        sp.onclick = () => { const t = timeline[i]; load(t.f, t.a, true); };
+      } else sp.classList.add("none");
+      el.appendChild(sp);
+    });
+    main.appendChild(el);
+  });
+  const sel = $("chap"); sel.innerHTML = "";
+  book.chapters.forEach(c => sel.add(new Option(c.title, c.para)));
+  sel.disabled = false; $("play").disabled = false;
+  sel.onchange = () => {
+    const c = book.chapters[sel.selectedIndex];
+    document.getElementById("p" + c.para).scrollIntoView({ block: "start" });
+    if (c.audio) load(c.audio[0], c.audio[1], !audio.paused);
+  };
+  $("info").textContent = `${book.title} — ${timed}/${total} frases com tempo`;
+}
+
+function load(f, t, play) {
+  if (f !== cur || !audio.src) { cur = f; audio.src = urls[f]; }
+  const go = () => { audio.currentTime = t; if (play) audio.play(); };
+  audio.readyState >= 1 ? go() : audio.addEventListener("loadedmetadata", go, { once: true });
+}
+
+$("play").onclick = () => audio.paused ? audio.play() : audio.pause();
+audio.onplay = () => $("play").textContent = "❚❚";
+audio.onpause = () => $("play").textContent = "▶︎";
+audio.onended = () => { if (cur + 1 < urls.length) load(cur + 1, 0, true); };
+document.onkeydown = e => {
+  if (e.target.tagName === "INPUT" || !book) return;
+  if (e.code === "Space") { e.preventDefault(); $("play").click(); }
+  if (e.code === "ArrowLeft") audio.currentTime -= 5;
+  if (e.code === "ArrowRight") audio.currentTime += 5;
+};
+
+// frase atual: a última cujo início já passou (pesquisa binária)
+function find(f, t) {
+  let lo = 0, hi = timeline.length - 1, ans = -1;
+  while (lo <= hi) {
+    const m = (lo + hi) >> 1, x = timeline[m];
+    if (x.f < f || (x.f === f && x.a <= t)) { ans = m; lo = m + 1; } else hi = m - 1;
+  }
+  return ans >= 0 && timeline[ans].f === f ? ans : -1;
+}
+function tick() {
+  if (book && !audio.paused) {
+    const t = audio.currentTime, i = find(cur, t + 0.05);
+    const m = Math.floor(t / 60), s = Math.floor(t % 60);
+    $("time").textContent = `${cur + 1}/${urls.length} · ${m}:${String(s).padStart(2, "0")}`;
+    if (i !== active) {
+      if (active >= 0) spans[active].classList.remove("on");
+      active = i;
+      if (i >= 0) {
+        spans[i].classList.add("on");
+        if ($("follow").checked) spans[i].scrollIntoView({ block: "center" });
+      }
+    }
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
