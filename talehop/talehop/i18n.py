@@ -27,6 +27,15 @@ MESSAGES = {
         "pt": "Áudio: {n} ficheiro(s). A transcrever (língua: {lang})...",
         "en": "Audio: {n} file(s). Transcribing (language: {lang})...",
     },
+    "lang_auto": {"pt": "a detetar no áudio", "en": "detecting it from the audio"},
+    "lang_detected": {
+        "pt": "  Língua detetada no áudio: {lang} ({p:.0%} de certeza)",
+        "en": "  Language detected in the audio: {lang} ({p:.0%} sure)",
+    },
+    "lang_unknown": {
+        "pt": "  O ebook indica a língua \"{lang}\", que não reconheço: vou detetá-la no áudio.",
+        "en": "  The ebook says the language is \"{lang}\", which I don't know: detecting it from the audio.",
+    },
     "aligning": {"pt": "A alinhar o texto com o áudio...", "en": "Aligning the text with the audio..."},
     "aligning_words": {
         "pt": "A alinhar {book} palavras do livro com {audio} palavras do áudio...",

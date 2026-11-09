@@ -87,7 +87,9 @@ function renderEpub() {
   $("pick-epub").textContent = tr(b ? "change" : "choose");
   const langs = STR[uiLang].langs;
   const first = $("language").options[0];
-  first.textContent = b && langs[b.language] ? tr("from_ebook_lang", { lang: langs[b.language] }) : tr("from_ebook");
+  // sem língua no ebook, o programa deteta-a no áudio (pipeline.py)
+  first.textContent = b && langs[b.language] ? tr("from_ebook_lang", { lang: langs[b.language] })
+    : b && ["", "und", "mul", "zxx"].includes(b.language || "") ? tr("from_audio") : tr("from_ebook");
   if (!b) {
     $("book-title").textContent = tr("no_ebook");
     $("book-author").textContent = tr("pick_epub_hint");

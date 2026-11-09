@@ -83,13 +83,31 @@ def windows(path, chunk_s=None, pad_s=PAD_S):
         yield lo / SAMPLE_RATE, k * chunk_s, math.inf, buf[lo - buf_start:].astype(np.float32) / 32768.0
 
 
+def _detect(model, audio, log):
+    """Língua do áudio, pelos primeiros 2 minutos com voz. None se não der para saber."""
+    try:
+        lang, prob, _ = model.detect_language(audio, vad_filter=True, language_detection_segments=4)
+    except Exception:  # por exemplo, um bloco só com música ou silêncio
+        return None
+    log(i18n.t("lang_detected", lang=lang, p=prob))
+    return lang
+
+
 def transcribe(audio_files, out_path, language="pt", model_name="large-v3-turbo",
                log=print, on_progress=None, cancel=None):
-    """on_progress(segundos_feitos, segundos_totais); cancel: threading.Event."""
+    """on_progress(segundos_feitos, segundos_totais); cancel: threading.Event.
+    language=None: a língua é detetada no áudio (no primeiro bloco) e usada no resto."""
+    from faster_whisper.tokenizer import _LANGUAGE_CODES
+    if language and language not in _LANGUAGE_CODES:
+        log(i18n.t("lang_unknown", lang=language))
+        language = None
+    auto = language is None
     out_path = Path(out_path)
     cache = json.loads(out_path.read_text(encoding="utf-8")) if out_path.exists() else {}
+    if auto and cache.get("auto") and cache.get("model") == model_name:
+        language = cache.get("language")  # detetada numa vez anterior
     done, partial = {}, {}
-    if cache.get("model") == model_name and cache.get("language") == language:
+    if cache.get("model") == model_name and cache.get("language") == language and language:
         for f in cache.get("files", []):
             (partial if "partial_until" in f else done)[f["name"]] = f
 
@@ -98,7 +116,7 @@ def transcribe(audio_files, out_path, language="pt", model_name="large-v3-turbo"
     finished = 0.0
     model = None
 
-    result = {"language": language, "model": model_name, "files": []}
+    result = {"language": language, "auto": auto, "model": model_name, "files": []}
 
     def save():
         out_path.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
@@ -128,10 +146,15 @@ def transcribe(audio_files, out_path, language="pt", model_name="large-v3-turbo"
         for start, keep_from, keep_until, audio in windows(path):
             if keep_until <= resume_at:
                 continue  # bloco já transcrito numa vez anterior
-            segments, _ = model.transcribe(
+            if language is None:
+                language = result["language"] = _detect(model, audio, log)
+            segments, info = model.transcribe(
                 audio, language=language, word_timestamps=True,
                 vad_filter=True, beam_size=5, condition_on_previous_text=False,
             )
+            if language is None:  # nem a deteção conseguiu: fica a que o Whisper escolheu aqui
+                language = result["language"] = info.language
+                log(i18n.t("lang_detected", lang=language, p=info.language_probability))
             for seg in segments:
                 if cancel is not None and cancel.is_set():
                     raise Cancelled()

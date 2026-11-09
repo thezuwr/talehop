@@ -48,10 +48,12 @@ def run(epub_path, audio_files, out_path=None, model="large-v3-turbo", language=
         log(t("pages", n=len(book["pages"]), first=book["pages"][0]["label"], last=book["pages"][-1]["label"]))
     else:
         log(t("no_pages"))
-    lang = (language or book["language"] or "pt").split("-")[0].lower()
+    # sem língua escolhida nem indicada no ebook ("und" = indeterminada), deteta-a no áudio
+    lang = (language or book["language"] or "").split("-")[0].lower()
+    lang = None if lang in ("", "und", "mul", "zxx") else lang
 
     step("transcrever")
-    log(t("audio", n=len(audio_files), lang=lang))
+    log(t("audio", n=len(audio_files), lang=lang or t("lang_auto")))
     tr = transcribe.transcribe(
         audio_files, work, language=lang, model_name=model, log=log, cancel=cancel,
         on_progress=lambda done, total: report(0.97 * done / max(total, 1), done, total),
