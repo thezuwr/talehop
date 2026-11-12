@@ -19,11 +19,19 @@ def main(argv=None):
     if check and argv[:1] == ["--ebook-check"]:  # ler um ebook no programa instalado, sem abrir a janela
         import json
         from . import ebook
-        b = ebook.read(argv[1])
+        # o programa instalado não tem consola: um erro por apanhar abria uma janela "Unhandled exception".
+        # Assim fica escrito no ficheiro e o programa sai com o código 1.
+        try:
+            if len(argv) != 2:
+                raise ValueError("uso: --ebook-check <ebook> (com o caminho entre aspas se tiver espaços)")
+            b = ebook.read(argv[1])
+            result = {"title": b["title"], "paras": len(b["paras"]), "chapters": len(b["chapters"]),
+                      "cover": bool(b["cover"]), "images": len(b.get("images", []))}
+        except Exception as e:
+            result = {"error": f"{type(e).__name__}: {e}"}
         with open(check, "w", encoding="utf-8") as f:
-            json.dump({"title": b["title"], "paras": len(b["paras"]), "chapters": len(b["chapters"]),
-                       "cover": bool(b["cover"])}, f, ensure_ascii=False)
-        return
+            json.dump(result, f, ensure_ascii=False)
+        sys.exit(1 if "error" in result else 0)
     if not argv:
         try:
             from . import gui_web
