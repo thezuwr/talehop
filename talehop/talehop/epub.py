@@ -113,16 +113,41 @@ def _is_pagebreak(tag):
     return "pagebreak" in (tag.get("epub:type") or "").split() or tag.get("role") == "doc-pagebreak"
 
 
-def _walk(el, emit, saw):
+def _image_refs(el):
+    """Imagens dentro de el (incluído): <img src> e <image xlink:href> (ilustrações dentro de um <svg>).
+    Igual ao imageRefs do Epub.kt."""
+    out = []
+
+    def visit(e):
+        name = e.name.split(":")[-1]
+        if name == "img" and e.get("src"):
+            out.append((e["src"], (e.get("alt") or "").strip()))
+        elif name == "image":
+            href = e.get("xlink:href") or e.get("href")
+            if href:
+                out.append((href, ""))
+        for c in e.children:
+            if isinstance(c, Tag):
+                visit(c)
+
+    visit(el)
+    return out
+
+
+def _walk(el, emit, saw, image=None):
     for node in el.children:
-        if not isinstance(node, Tag) or node.name in SKIP:
+        if not isinstance(node, Tag):
+            continue
+        if image and node.name in {"img", "svg"}:
+            image(node)
+        if node.name in SKIP:
             continue
         saw(node)
         if node.name in BLOCKS:
             emit(node)
         # parágrafos e títulos não contêm outros blocos; o resto pode conter
         if node.name not in {"p", "h1", "h2", "h3", "h4", "h5", "h6"}:
-            _walk(node, emit, saw)
+            _walk(node, emit, saw, image)
 
 
 def read_epub(path):
@@ -156,6 +181,8 @@ def read_epub(path):
     pending_pages = []  # páginas que começam no próximo parágrafo com texto (pode ser no ficheiro seguinte)
     spine = [manifest[r["idref"]] for r in opf.find("spine").find_all("itemref")
              if r["idref"] in manifest]
+    images = []       # {"path", "para", "alt"}: a imagem aparece antes do parágrafo para (sem a capa)
+    seen_images = set()
     for item in spine:
         if "html" not in item.get("media-type", ""):
             continue
@@ -180,7 +207,18 @@ def read_epub(path):
             if label is not None:
                 pending_pages.append(label)
 
+        def add_images(refs):
+            for src, alt in refs:
+                path = posixpath.normpath(posixpath.join(posixpath.dirname(fname), unquote(src.split("#")[0])))
+                if path != cover and path not in seen_images:
+                    seen_images.add(path)
+                    images.append({"path": path, "para": len(paras), "alt": alt})
+
+        def image(node):
+            add_images(_image_refs(node))
+
         def emit(node):
+            add_images(_image_refs(node))
             pending_ids.extend(t["id"] for t in node.find_all(id=True))
             text, marks = _take_marks(_block_text(node, page_label))
             if not text:
@@ -204,13 +242,20 @@ def read_epub(path):
                     pending_pages.append(label)
             paras.append({"kind": kind, "sentences": sentences})
 
-        _walk(body, emit, saw)
+        _walk(body, emit, saw, image)
 
     chapters = _toc(z, opf, manifest, full, anchors, paras)
     cover_bytes = z.read(cover) if cover and cover in z.namelist() else None
+    # imagens depois do último parágrafo ficam presas a ele; os bytes vão já lidos, para o pacote
+    last = max(len(paras) - 1, 0)
+    names = set(z.namelist())
+    for img in images:
+        img["para"] = min(img["para"], last)
+        img["data"] = z.read(img["path"]) if img["path"] in names else None
     return {"title": title, "author": author, "language": language,
             "paras": paras, "chapters": chapters, "pages": _dedupe_pages(pages),
-            "cover": cover_bytes, "cover_ext": posixpath.splitext(cover or "")[1]}
+            "cover": cover_bytes, "cover_ext": posixpath.splitext(cover or "")[1],
+            "images": images}
 
 
 def _dedupe_pages(pages):
